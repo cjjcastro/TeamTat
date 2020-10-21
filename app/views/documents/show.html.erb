@@ -21,6 +21,7 @@
       </a>
       <a class="item" data-tab="relations">Relations</a>
       <a class="item" data-tab="shortcuts">Shortcuts</a>
+      <a class="item" data-tab="filter">Filter</a>
     </div>
     <div class="ui bottom attached tab segment active type-tab-content" data-tab="annotations">
       <div id="defaultTypeSelector" class='type-selector'>
@@ -130,13 +131,13 @@
       </div>
       <hr> 
       <div style='text-align: left; display: block; width:100%; margin-bottom: 1rem;'>
-          <label style='font-weight: bold;'>Add annotation:</label>
+          <label style='font-weight: bold;'>Annotate Text:</label>
           <p id='p-add-annot' style='display: inline-block;margin:0'>space</p>
           <button id='shc-add-annot' style='margin-left: auto; float: right;'>Change</button>
       </div>
       <hr> 
       <div style='text-align: left; display: block; width:100%; margin-bottom: 1rem;'>
-          <label style='font-weight: bold;'>Create annotation:</label>
+          <label style='font-weight: bold;'>Create Label:</label>
           <p id='p-create-annot' style='display: inline-block;margin:0'>alt</p>
           <button id='shc-create-annot' style='margin-left: auto; float: right;'>Change</button>
       </div>
@@ -146,12 +147,42 @@
           <p id='p-delete-annot' style='display: inline-block;margin:0'>alt</p>
           <button id='shc-delete-annot' style='margin-left: auto; float: right;'>Change</button>
       </div>
+      <hr>
       <div style='text-align: left; display: block; width:100%; margin-bottom: 1rem;'>
           <label style='font-weight: bold;'>Next ten annotation:</label>
           <p id='p-plus-ten' style='display: inline-block;margin:0'>alt</p>
           <button id='shc-plus-ten' style='margin-left: auto; float: right;'>Change</button>
       </div>
     </div class>
+
+    <div class="ui bottom attached tab segment type-tab-content" data-tab="filter">
+      <% if @document.project.entity_types.empty? %>
+        <h5>No entity on database</h5>
+      <% else %>
+        <div style="padding-bottom: 1rem; padding-top:2rem; padding-left: 1rem;"><h5>Entities Filter</h5></div>
+        <div id="entities-list" style="margin-left: 2rem; padding-bottom: 2rem">
+          <% @document.project.entity_types.each_with_index do |e, index| %>
+            <% next if e.name.blank? %>
+            <input type="checkbox" id="<%= e.name %>" name="<%= e.name %>" value="1">
+            <label for="<%= e.name %>"><%= e.name %></label><br>
+          <% end %>
+          <div style="white-space: no-wrap; margin-top: 1rem;">
+            <div style="display: inline-block; white-space: normal">
+              <button id="save-filter">Save</button>
+            </div>
+            <div style="display: inline-block; white-space: normal">
+              <button id="mark-all-filter">Mark All</button>
+            </div>
+            <div style="display: inline-block; white-space: normal">
+              <button id="unmark-all-filter">Unmark All</button>
+            </div>
+          </div>
+          <div id="saved-confirm"></div>
+        </div>
+      <% end %>
+
+    </div class>
+
     <a id="annotationTableUpButton" class="scrollUpDownButton"><i class='icon arrow circle up'></i></a>
     <a id="annotationTableDownButton" class="scrollUpDownButton"><i class='icon arrow circle down'></i></a>
   </div>
