@@ -770,17 +770,106 @@ BioC.prototype.bindAnnotationSpan = function() {
       end = aux
     }
   }
+
   var optionValues = [];
+  var filterArray = [];
+
+  saveFilter = function() {
+    var saved = localStorage.setItem("filter", JSON.stringify(filterArray));
+    if (saved === undefined) {
+      $('#saved-confirm').append('<p style="color: green">Saved!!</p>')
+    }
+  }
+
+  loadFilter = function() {
+    var storedFilter = JSON.parse(localStorage.getItem("filter"));
+    if (storedFilter == null) {
+      return null
+    } else {
+      return storedFilter
+    }
+  }
+
   var createEntityShorcuts = function() {
     optionValues = [];
+    let i = 0;
+    $('[id^=entity-helper]').empty();
     $('#defaultTypeSelector select > option').each(function(index) {
-      optionValues.push($(this).val());
-      if (index < $('#defaultTypeSelector select > option').length-2) {
-        $('[id^=entity-helper]').append('<li>'+ index + ' - ' + $(this).text() + '</li>')
-      }
+      if (filterArray.indexOf($(this).text()) !== -1) {
+        optionValues.push($(this).val());
+        if (index < $('#defaultTypeSelector select > option').length-2) {
+          $('[id^=entity-helper]').append('<li>'+ i + ' - ' + $(this).text() + '</li>')
+        }
+        i += 1;
+      } 
     });
   }
+
+  updateEntityList = function () {
+    $("#entities-list input[type='checkbox']").change(function() {
+      if($(this).is(':checked')){
+        filterArray.push($(this).get(0).id);
+      } else {
+        const index = filterArray.indexOf($(this).get(0).id);
+        if (index > -1) {
+          filterArray.splice(index, 1);
+        }
+      }
+      createEntityShorcuts();
+    });
+  }
+
+  filterArray = loadFilter()
+  if (filterArray == null) {
+    filterArray = []
+    $('#defaultTypeSelector select > option').each(function(index) {
+       filterArray.push($(this).get(0).id);
+    })
+  }
+
+  $('#save-filter').click(function() {
+    console.log("Saving filter")
+    saveFilter();
+  });
+
+  $("#entities-list input[type='checkbox']").each(function() {
+    if (filterArray.indexOf($(this).get(0).id) !== -1) {
+      $(this).prop("checked", true);
+    }
+  });
+
+  $("#mark-all-filter").click(function() {
+    $("#entities-list input[type='checkbox']").each(function() {
+      $(this).prop("checked", true).change();
+    });
+  })
+
+  $("#unmark-all-filter").click(function() {
+    $("#entities-list input[type='checkbox']").each(function() {
+      $(this).prop("checked", false).change();
+      filterArray = []
+    });
+  })
+
+  updateEntityList();
   createEntityShorcuts();
+
+  get_word = function() {
+    s = window.getSelection();
+    var range = s.getRangeAt(0);
+    var node = s.anchorNode;
+    while (range.toString().indexOf(' ') != 0) {
+        range.setStart(node, (range.startOffset - 1));
+    }
+    range.setStart(node, range.startOffset + 1);
+    do {
+        range.setEnd(node, range.endOffset + 1);
+
+    } while (range.toString().indexOf(' ') == -1 && range.toString().trim() != '' && range.endOffset < node.length);
+    var str = range.toString().trim();
+    alert(str);
+  }
+
   $(".passage").click(function () {
     passageId = $(this).data('id');
     par = $(this);
@@ -803,7 +892,9 @@ BioC.prototype.bindAnnotationSpan = function() {
     if ((e.which >= 48) && (e.which <= 57)) {
       let norm = ((e.which - 48))
       norm += control;
-      $("#defaultTypeSelector select").val(optionValues[norm]).change()
+      if (norm < optionValues.length) {
+        $("#defaultTypeSelector select").val(optionValues[norm]).change()
+      }
     }
     switch(e.which) {
       case shortcuts['plus-ten']:
