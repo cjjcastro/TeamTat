@@ -302,7 +302,7 @@ var BioC = function(id, options) {
   } 
 
   $("#addRelationButton").click(function() {
-    self.addNodeToRelation([], {force: true});
+    self.addNodeToRelation([], {force: true})
   });
 
   this.renderAnnotatorChecker();
@@ -564,6 +564,7 @@ BioC.prototype.bindAnnotationSpan = function() {
     'next-char': 69,
     'previous-char': 81,
     'add-annot': 32,
+    'add-relation': 86,
     'create-annot': 67,
     'delete-annot': 82,
     'plus-ten': 17
@@ -1009,6 +1010,29 @@ BioC.prototype.bindAnnotationSpan = function() {
         start = arrayOfSpans[startSpan].words[arrayOfSpans[startSpan].words.length-1][0];
         end = arrayOfSpans[endSpan].words[arrayOfSpans[endSpan].words.length-1][1];
         break;
+      case shortcuts['add-relation']:
+        var selection = getSelected();
+        if (selection && selection.rangeCount > 0) {
+          var range = selection.getRangeAt(0);
+
+          var result = self.findAnnotationRange(range);
+          if (result.error) {
+            toastr.error("You cannot work with multiple paragraphs. Please select a span in a paragraph.");
+            clearSelection();
+            return;
+          }
+          var annotations = _.filter(self.annotations, function(a) {
+            return result.annotations.includes(a.id); 
+          });
+          var annotationsIds = $.map(annotations, function(annot) {
+            return annot.id
+          })
+          self.addNodeToRelation([], {force: true}, function() {
+            self.addNodeToRelation(annotationsIds);
+          })
+        } else {
+          console.log('Nothing to add')
+        }
       default:
         break;
     }
@@ -1297,6 +1321,8 @@ BioC.prototype.showAnnotationListModal = function(annotationIds, offset, text, p
         var $tr = $(item).closest('tr');
         return "" + $tr.data('id');
       });
+      console.log("ids function")
+      console.log(ids)
       self.addNodeToRelation(ids)
       $('#typeTab .item').tab('change tab', 'relations');
       $("#annotationListModal").modal('hide');
@@ -2068,7 +2094,7 @@ BioC.prototype.hasCycle = function(relation, visited) {
   return false;
 }
 
-BioC.prototype.addNodeToRelation = function(ids, options) {
+BioC.prototype.addNodeToRelation = function(ids, options, _callback) {
   var self = this;
   options = options || {};
   if (!self.writable) {
@@ -2182,6 +2208,7 @@ BioC.prototype.addNodeToRelation = function(ids, options) {
       },
       complete: function() {
         $(".document-loader").removeClass("active");
+        _callback();
       }
     });
   }
@@ -2440,13 +2467,10 @@ BioC.prototype.renderPassage = function(id) {
   $p_text_div.find(".phrase.need-popup2").unbind('mouseover').mouseover(function(e) {
     var pos = inlineOffset($(e.currentTarget));
     var concepts = $(e.currentTarget).data('concepts').split(' ');
+    var annotationName = $(e.currentTarget).attr('class').match(/(A_.*?)\s/g)[0].substr(2);
     concepts = _.filter(_.map(concepts, function(n) {return n && n.trim();}), function(n) {return n.length > 0;});
-    var names = _.map(concepts, function(c) { 
-      var name = self.conceptNameCache.get(c);
-      if (c == name) {
-        name = "";
-      }
-      return self.templates.popup({id: c, name: name}); 
+    var names = _.map([annotationName], function(c) { 
+      return self.templates.popup({id: "Label: ", name: annotationName}); 
     });
     if (names.length > 0) {
       $("#conceptPopup table").html(names.join());
@@ -2455,6 +2479,26 @@ BioC.prototype.renderPassage = function(id) {
     }      
     $("#conceptPopup").show().css({top: (pos.top + 32) + "px", left: pos.left + "px"});      
   });
+
+  // $p_text_div.find(".phrase.need-popup2").unbind('mouseover').mouseover(function(e) {
+  //   var pos = inlineOffset($(e.currentTarget));
+  //   var concepts = $(e.currentTarget).data('concepts').split(' ');
+  //   concepts = _.filter(_.map(concepts, function(n) {return n && n.trim();}), function(n) {return n.length > 0;});
+  //   var names = _.map(concepts, function(c) { 
+  //     var name = self.conceptNameCache.get(c);
+  //     if (c == name) {
+  //       name = "";
+  //     }
+  //     return self.templates.popup({id: id, name: name}); 
+  //   });
+  //   if (names.length > 0) {
+  //     $("#conceptPopup table").html(names.join());
+  //   } else {
+  //     $("#conceptPopup table").html("<tr><td colspan='2' class='warning'>No ID assigned</td></tr>");
+  //   }      
+  //   $("#conceptPopup").show().css({top: (pos.top + 32) + "px", left: pos.left + "px"});      
+  // });
+
   $p_text_div.find(".phrase.need-popup2").unbind('mouseout').mouseout(function(e) {
     $("#conceptPopup").hide();
   });
