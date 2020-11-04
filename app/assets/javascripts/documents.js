@@ -574,14 +574,22 @@ BioC.prototype.bindAnnotationSpan = function() {
     let s = 0;
     let e = 1;
     let i;
+    let separators = [";",",",":","."," ","\n"]
     let arrayOfOffsets = new Array();
 
     for (i = 0; i <= text.length; i++) {
-      if ((text[i] === ' ') || (text[i] === '\n') || (i === text.length-1)) {
-        e = i;
-        arrayOfOffsets.push([s, e+1]);
-        i++;
-        s = i;
+      if (separators.includes(text[i]) || (i === text.length)) {
+        if (i === 0) {
+          while(separators.includes(text[i])){
+            i++;
+            s = i;
+          }
+        } else {
+          e = i;
+          arrayOfOffsets.push([s, e]);
+          i++;
+          s = i;
+        }
       }
     }
     return arrayOfOffsets;
@@ -647,17 +655,13 @@ BioC.prototype.bindAnnotationSpan = function() {
   nextJump = function (hold) {
     if (arrayOfSpans.length <= 1) {
     } else {
-      console.log("startWord: " + startWord);
-      console.log("endWord: " + endWord);
-      console.log("startSpan: " + startSpan);
-      console.log("endSpan: " + endSpan);
       if ((endWord + 5) >= arrayOfSpans[endSpan].words.length) {
         if (endSpan+1 < arrayOfSpans.length) {
           endSpan+=1;
           if (!hold) {
             startSpan = endSpan;
           }
-          startWord = 0;
+          // startWord = 0;
           endWord = 0;
         }
       } else {
@@ -673,10 +677,6 @@ BioC.prototype.bindAnnotationSpan = function() {
   }
 
   previousJump = function (hold) {
-    console.log("startWord: " + startWord);
-    console.log("endWord: " + endWord);
-    console.log("startSpan: " + startSpan);
-    console.log("endSpan: " + endSpan);
     if (arrayOfSpans.length <= 1) {
     } else {
       if ((endWord - 5) < 0) {
@@ -956,6 +956,12 @@ BioC.prototype.bindAnnotationSpan = function() {
             return annot.annotation_id
           })
           self.deleteCheckedAnnotation(annotationsIds);
+          startWord = arrayOfSpans[startSpan-1].words.length;
+          endWord = startWord+arrayOfSpans[endSpan].words.length;
+          start = arrayOfSpans[startSpan].words[arrayOfSpans[startSpan].words.length-1][0];
+          end = arrayOfSpans[endSpan].words[arrayOfSpans[endSpan].words.length-1][1];
+          startSpan -= 1;
+          endSpan -= 1;
         } else {
           console.log('Nothing to Delete')
         }
@@ -1005,10 +1011,7 @@ BioC.prototype.bindAnnotationSpan = function() {
             clearSelection();
           }
         }
-        startSpan = endSpan;
-        endWord = startWord;
-        start = arrayOfSpans[startSpan].words[arrayOfSpans[startSpan].words.length-1][0];
-        end = arrayOfSpans[endSpan].words[arrayOfSpans[endSpan].words.length-1][1];
+        console.log("Anotacao Criada")
         break;
       case shortcuts['add-relation']:
         var selection = getSelected();
@@ -1036,7 +1039,6 @@ BioC.prototype.bindAnnotationSpan = function() {
       default:
         break;
     }
-    console.log('Passei aqui')
     spansWords()
     assignSpans()
     setRangeSelection();
@@ -1404,6 +1406,7 @@ BioC.prototype.refreshViewUpdate = function(data) {
 
 BioC.prototype.deleteCheckedAnnotation = function(ids) {
   var self = this;
+  console.log(ids)
   $.ajax({
     url: self.annotationUrl(ids[0]),
     method: "DELETE",
@@ -2462,6 +2465,30 @@ BioC.prototype.renderPassage = function(id) {
 
   $p_text_div.find('.annotation').click(function(e) {
     self.clickAnnotation(e.currentTarget, {event: e});
+  });
+
+  window.oncontextmenu=function(){
+    return false;
+  }
+
+  $p_text_div.find('.annotation').mousedown(function(e) {
+    e.preventDefault();
+    switch (e.which) {
+        case 3:
+          var $e = $(e.currentTarget);
+          console.log("Clicked", $e);
+          let id = $e.data('id').toString()
+          console.log("RIGHT MOUSE CLICK:" + id);
+          if (!id) {
+            console.log("Sorry, No id");
+            return;
+          }
+          var all_a = _.filter(self.annotations, {id: id});
+          var a = all_a[0];
+          self.deleteCheckedAnnotation([a.annotation_id]);
+          break;
+        default:
+    }
   });
 
   $p_text_div.find(".phrase.need-popup2").unbind('mouseover').mouseover(function(e) {
