@@ -29,9 +29,6 @@
         <%= link_to "#", onclick: "window.open('https://github.com/UnB-KnEDLe/tutorial_annotation_teamtat', 'teamtat-tutorial', 'width=850,height=800,menubar=no,location=no,scrollbars=yes,toolbar=no,status=no,resizable=yes');return false;", class: "item" do %>
           Tutorial
         <% end %>
-        <%= link_to "#", onclick: "window.open('https://docs.google.com/spreadsheets/d/1CeDI2YEOC4CMw4ILab6Y9XlzTjlqUzkwgZtTn1iNE_E/edit#gid=1662337018', 'teamtat-tutorial', 'width=850,height=800,menubar=no,location=no,scrollbars=yes,toolbar=no,status=no,resizable=yes');return false;", class: "item" do %>
-          Escalonamento
-        <% end %>
         <%= link_to "About", '/about', class: "item #{'active' if @top_menu == 'about'}" %>
         <% if current_user.present? && current_user.super_admin? %>
           <div class="ui dropdown item">
