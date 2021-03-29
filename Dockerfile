@@ -18,7 +18,7 @@ COPY . /app
 RUN rm config/credentials.yml.enc
 COPY config/master.key.sample config/master.key
 COPY config/credentials.yml.enc.sample config/credentials.yml.enc
-COPY config/database.yml.docker config/database.yml
+COPY config/database.yml.local2 config/database.yml
 
 COPY docker-entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
@@ -28,4 +28,4 @@ RUN ln -s usr/local/bin/entrypoint.sh /entrypoint.sh # backwards compat
 ENTRYPOINT ["entrypoint.sh"]
 EXPOSE 3000
 # Start the main process.
-CMD ["rails", "server", "-b", "0.0.0.0"]
+CMD ["bundle", "exec", "rails", "server", "-b", "0.0.0.0"]
